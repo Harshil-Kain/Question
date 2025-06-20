@@ -13,30 +13,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def heading_to_markdown(tag):
-    level = int(tag.name[1])
-    return f"{'#' * level} {tag.get_text(strip=True)}"
-
 @app.get("/api/outline")
-def get_country_outline(country: str = Query(...)):
+def get_outline(country: str = Query(...)):
     url = f"https://en.wikipedia.org/wiki/{country.replace(' ', '_')}"
-    response = requests.get(url)
-
-    if response.status_code != 200:
-        return {"error": "Could not fetch Wikipedia page"}
-
-    soup = BeautifulSoup(response.content, "html.parser")
-    content_div = soup.find("div", {"class": "mw-parser-output"})
-
-    if not content_div:
-        return {"error": "Could not find content section"}
-
-    headings = content_div.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
-    markdown_outline = "## Contents\n\n" + f"# {country.title()}\n\n"
+    res = requests.get(url)
+    soup = BeautifulSoup(res.text, "html.parser")
+    content = soup.find("div", {"class": "mw-parser-output"})
+    if not content:
+        return {"error": "content not found"}
+    headings = content.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
+    markdown = "## Contents\n\n" + f"# {country}\n\n"
     for tag in headings:
-        markdown_outline += heading_to_markdown(tag) + "\n\n"
+        level = int(tag.name[1])
+        markdown += f"{'#' * level} {tag.get_text(strip=True)}\n\n"
+    return {"country": country, "markdown_outline": markdown}
 
-    return {"country": country, "markdown_outline": markdown_outline}
-
-# ✅ Required for Vercel
 handler = Mangum(app)
