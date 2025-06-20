@@ -6,11 +6,9 @@ from mangum import Mangum
 
 app = FastAPI()
 
-# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -40,5 +38,5 @@ def get_country_outline(country: str = Query(...)):
 
     return {"country": country, "markdown_outline": markdown_outline}
 
-# Wrap with Mangum for Vercel
+# ✅ Required for Vercel
 handler = Mangum(app)
